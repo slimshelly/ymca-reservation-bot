@@ -4,23 +4,46 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support import expected_conditions as EC
-from time import time, ctime
+from time import time, sleep
 from datetime import datetime
 
+# variables to be filled in
 USERNAME = ""
 PASSWORD = ""
+SLOT_TIME = "2021-01-23 19:00:00.00"
+SESSION_ID = "765187738-5feccc8aee1f28-62990746"
 
+driver = webdriver.Chrome(ChromeDriverManager().install())
 
-def main():
-    login()
-    wait_until_ready()
+# clicks the session at the exact time, attempts to book it
+def book():
+    session_btn = driver.find_element_by_id(SESSION_ID)
+    session_btn.click()
+
+    wait = WebDriverWait(driver, 1)
+    book_btn = wait.until(EC.element_to_be_clickable(
+        (By.ID, 'book_btn')))
+    book_btn.click()
+
+# loops until it is time to book
+def wait_until_ready():
+    slot_time_obj = datetime.strptime(SLOT_TIME,'%Y-%m-%d %H:%M:%S.%f')
+    sec = slot_time_obj.timestamp()
+    print(sec)
+    while True:
+        currtime = time()
+        print(currtime)
+        if currtime >= sec:
+            book()
+            break
+        else:
+            print("not yet")
+            sleep(0.25)
+            driver.find_elements_by_class_name("close-popup")
+            
 
 # login to the ymca website, loads current week page
-
-
 def login():
-    driver = webdriver.Chrome(
-        ChromeDriverManager().install(), options=options)
     driver.get('https://prospect-park-ymca.virtuagym.com/signin')
     username_field = driver.find_element_by_id("username")
     username_field.click()
@@ -32,28 +55,11 @@ def login():
     login_btn.click()
     driver.get('https://prospect-park-ymca.virtuagym.com/classes/week/2021-01-26?event_type=1201&coach=0&activity_id=0&member_id_filter=0&embedded=0&planner_type=7&show_personnel_schedule=0&in_app=0&single_club=0')
 
-# loops until it is time to book
+
+def main():
+    login()
+    wait_until_ready()
 
 
-def wait_until_ready():
-    swimtime = '2021-01-23 17:00:00.00'
-    while True:
-        currtime = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-        if currtime >= swimtime:
-                book()
-                break
-            else:
-                print("not yet")
-                time.sleep(0.5)
-
-# clicks the session at the exact time, attempts to book it
-
-def book():
-    session_btn = driver.find_element_by_id(
-        "1313502331-5f89f04bca4484-64368299")
-    session_btn.click()
-
-    wait = WebDriverWait(driver, 1)
-    book_btn = wait.until(EC.element_to_be_clickable(
-        (By.ID, 'book_btn')))
-    book_btn.click()
+if __name__ == "__main__":
+    main()
