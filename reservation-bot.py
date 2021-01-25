@@ -4,43 +4,76 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support import expected_conditions as EC
+from datetime import datetime, timedelta, date
 from time import time, sleep
-from datetime import datetime
 
-# variables to be filled in
+# credentials to be filled in
 USERNAME = ""
 PASSWORD = ""
-SLOT_TIME = "2021-01-23 19:00:00.00"
-SESSION_ID = "765187738-5feccc8aee1f28-62990746"
 
 driver = webdriver.Chrome(ChromeDriverManager().install())
 
 # clicks the session at the exact time, attempts to book it
-def book():
-    session_btn = driver.find_element_by_id(SESSION_ID)
+def book(session_btn):
     session_btn.click()
 
     wait = WebDriverWait(driver, 1)
-    book_btn = wait.until(EC.element_to_be_clickable(
-        (By.ID, 'book_btn')))
+    book_btn = wait.until(EC.element_to_be_clickable((By.ID, 'book_btn')))
     book_btn.click()
 
 # loops until it is time to book
-def wait_until_ready():
-    slot_time_obj = datetime.strptime(SLOT_TIME,'%Y-%m-%d %H:%M:%S.%f')
-    sec = slot_time_obj.timestamp()
+def wait_until_ready(session_btn, countdown_time):
+    sec = countdown_time.timestamp()
     print(sec)
     while True:
         currtime = time()
         print(currtime)
         if currtime >= sec:
-            book()
+            book(session_btn)
             break
         else:
             print("not yet")
             sleep(0.25)
             driver.find_elements_by_class_name("close-popup")
-            
+
+# finds the next available session for that day
+def find_session(two_days_from_now):
+    # find index of column
+    week_start = two_days_from_now - timedelta(days=two_days_from_now.weekday())
+    delta = two_days_from_now - week_start
+    index = delta.days
+    day_list = driver.find_elements_by_css_selector("#schedule_content .cal_column");
+    day_column = day_list[index]
+
+    class_list = day_column.find_elements_by_css_selector(".c_holder")
+
+    for item in class_list:
+        class_name = item.find_element_by_class_name("classname").text
+        class_time_str = item.find_element_by_class_name("time").text
+        class_start_str = class_time_str.split('-')[0].strip()
+
+        if class_name == "Lap Swim":
+            # check if the time is the next closest one to now
+            class_time = datetime.strptime(class_start_str, "%I:%M %p").time()
+            countdown_time = datetime.combine(date.today(), class_time)
+            time_now = datetime.now()
+            # if the class time is after the current time, we can wait to book it
+            if (time_now < countdown_time):
+                # jackpot
+                session_btn = item.find_element_by_xpath('..')
+                print(class_time)
+                print(countdown_time.time())
+                return (session_btn, countdown_time)
+        else:
+            print("nothing hit")
+
+# loads page based on target date
+def load_page():
+    now = datetime.now()
+    two_days_from_now = datetime.now() + timedelta(hours=48)
+    target_date_string = two_days_from_now.strftime('%Y-%m-%d')
+    driver.get('https://prospect-park-ymca.virtuagym.com/classes/week/'+ target_date_string +'?event_type=1201&coach=0&activity_id=0&member_id_filter=0&embedded=0&planner_type=7&show_personnel_schedule=0&in_app=0&single_club=0')
+    return two_days_from_now
 
 # login to the ymca website, loads current week page
 def login():
@@ -53,13 +86,13 @@ def login():
     password_field.send_keys(PASSWORD)
     login_btn = driver.find_element_by_id("login_btn")
     login_btn.click()
-    driver.get('https://prospect-park-ymca.virtuagym.com/classes/week/2021-01-26?event_type=1201&coach=0&activity_id=0&member_id_filter=0&embedded=0&planner_type=7&show_personnel_schedule=0&in_app=0&single_club=0')
 
-
+# main flow of execution
 def main():
     login()
-    wait_until_ready()
-
+    two_days_from_now = load_page()
+    session_btn, countdown_time = find_session(two_days_from_now)
+    wait_until_ready(session_time, countdown_time)
 
 if __name__ == "__main__":
     main()
