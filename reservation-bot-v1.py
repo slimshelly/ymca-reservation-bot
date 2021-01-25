@@ -10,11 +10,8 @@ from datetime import datetime
 # variables to be filled in
 USERNAME = ""
 PASSWORD = ""
-SLOT_TIME = "2021-01-25 07:30:00.00"
+BOOKING_TIME = "2021-01-25 07:30:00.00"
 SESSION_ID = "544614269-5f91dac96641f3-69299650"
-
-# SESSION_ID = "1754561656-5f419b1caf3347-13483087"
-# SLOT_TIME = "2021-01-25 08:00:00.00"
 
 driver = webdriver.Chrome(ChromeDriverManager().install())
 
@@ -30,7 +27,7 @@ def book():
 
 # loops until it is time to book
 def wait_until_ready():
-    slot_time_obj = datetime.strptime(SLOT_TIME,'%Y-%m-%d %H:%M:%S.%f')
+    slot_time_obj = datetime.strptime(BOOKING_TIME,'%Y-%m-%d %H:%M:%S.%f')
     sec = slot_time_obj.timestamp()
     print(sec)
     while True:
