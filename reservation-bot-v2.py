@@ -17,22 +17,20 @@ driver = webdriver.Chrome(ChromeDriverManager().install())
 def book(session_btn):
     session_btn.click()
 
-    wait = WebDriverWait(driver, 1)
+    wait = WebDriverWait(driver, 2)
     book_btn = wait.until(EC.element_to_be_clickable((By.ID, 'book_btn')))
     book_btn.click()
+
 
 # loops until it is time to book
 def wait_until_ready(session_btn, countdown_time):
     sec = countdown_time.timestamp()
-    print(sec)
     while True:
         currtime = time()
-        print(currtime)
         if currtime >= sec:
             book(session_btn)
             break
         else:
-            print("not yet")
             sleep(0.25)
             driver.find_elements_by_class_name("close-popup")
 
@@ -57,15 +55,9 @@ def find_session(two_days_from_now):
             class_time = datetime.strptime(class_start_str, "%I:%M %p").time()
             countdown_time = datetime.combine(date.today(), class_time)
             time_now = datetime.now()
-            # if the class time is after the current time, we can wait to book it
             if (time_now < countdown_time):
-                # jackpot
                 session_btn = item.find_element_by_xpath('..')
-                print(class_time)
-                print(countdown_time.time())
                 return (session_btn, countdown_time)
-        else:
-            print("nothing hit")
 
 # loads page based on target date
 def load_page():
@@ -92,7 +84,7 @@ def main():
     login()
     two_days_from_now = load_page()
     session_btn, countdown_time = find_session(two_days_from_now)
-    wait_until_ready(session_time, countdown_time)
+    wait_until_ready(session_btn, countdown_time)
 
 if __name__ == "__main__":
     main()
