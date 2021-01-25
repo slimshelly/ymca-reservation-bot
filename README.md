@@ -11,7 +11,7 @@ you need to set the following variables/macros:
 3.  `USERNAME` your username
 4.  `PASSWORD` your password
 
-the bot will countdown until the SLOT TIME
+the bot will countdown until the `BOOKING_TIME` and book
 
 ## running the bot - v2
 you need to set the following variables/macros
